@@ -81,8 +81,7 @@ def drop_connect(inputs, training=False, drop_connect_rate=0.):
     random_tensor = keep_prob + torch.rand(
         (inputs.size()[0], 1, 1, 1), dtype=inputs.dtype, device=inputs.device)
     random_tensor.floor_()  # binarize
-    output = inputs.div(keep_prob) * random_tensor
-    return output
+    return inputs.div(keep_prob) * random_tensor
 
 
 class ChannelShuffle(nn.Module):
@@ -95,9 +94,7 @@ class ChannelShuffle(nn.Module):
         """Channel shuffle: [N,C,H,W] -> [N,g,C/g,H,W] -> [N,C/g,g,H,w] -> [N,C,H,W]"""
         N, C, H, W = x.size()
         g = self.groups
-        assert C % g == 0, "Incompatible group size {} for input channel {}".format(
-            g, C
-        )
+        assert C % g == 0, f"Incompatible group size {g} for input channel {C}"
         return (
             x.view(N, g, int(C / g), H, W)
             .permute(0, 2, 1, 3, 4)
@@ -245,9 +242,7 @@ class InvertedResidual(nn.Module):
         self.bn3 = norm_layer(out_chs, **norm_kwargs)
 
     def feature_module(self, location):
-        if location == 'post_exp':
-            return 'act1'
-        return 'conv_pwl'
+        return 'act1' if location == 'post_exp' else 'conv_pwl'
 
     def feature_channels(self, location):
         if location == 'post_exp':
@@ -370,9 +365,7 @@ class EdgeResidual(nn.Module):
         self.bn2 = norm_layer(out_chs, **norm_kwargs)
 
     def feature_module(self, location):
-        if location == 'post_exp':
-            return 'act1'
-        return 'conv_pwl'
+        return 'act1' if location == 'post_exp' else 'conv_pwl'
 
     def feature_channels(self, location):
         if location == 'post_exp':
