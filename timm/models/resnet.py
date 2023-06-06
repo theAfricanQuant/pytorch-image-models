@@ -104,8 +104,7 @@ default_cfgs = {
 
 
 def _get_padding(kernel_size, stride, dilation=1):
-    padding = ((stride - 1) + dilation * (kernel_size - 1)) // 2
-    return padding
+    return ((stride - 1) + dilation * (kernel_size - 1)) // 2
 
 
 class SEModule(nn.Module):
@@ -308,7 +307,7 @@ class ResNet(nn.Module):
                  block_reduce_first=1, down_kernel_size=1, avg_down=False, output_stride=32,
                  act_layer=nn.ReLU, norm_layer=nn.BatchNorm2d, drop_rate=0.0, global_pool='avg',
                  zero_init_last_bn=True, block_args=None):
-        block_args = block_args or dict()
+        block_args = block_args or {}
         self.num_classes = num_classes
         deep_stem = 'deep' in stem_type
         self.inplanes = stem_width * 2 if deep_stem else 64
@@ -400,10 +399,16 @@ class ResNet(nn.Module):
         layers = [block(
             self.inplanes, planes, stride, downsample, dilation=first_dilation, previous_dilation=dilation, **bkwargs)]
         self.inplanes = planes * block.expansion
-        for i in range(1, blocks):
-            layers.append(block(
-                self.inplanes, planes, dilation=dilation, previous_dilation=dilation, **bkwargs))
-
+        layers.extend(
+            block(
+                self.inplanes,
+                planes,
+                dilation=dilation,
+                previous_dilation=dilation,
+                **bkwargs
+            )
+            for _ in range(1, blocks)
+        )
         return nn.Sequential(*layers)
 
     def get_classifier(self):

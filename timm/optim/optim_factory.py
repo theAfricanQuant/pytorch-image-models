@@ -87,7 +87,7 @@ def create_optimizer(args, model, filter_bias_and_bn=True):
         optimizer = FusedNovoGrad(
             parameters, lr=args.lr, betas=(0.95, 0.98), weight_decay=weight_decay, eps=args.opt_eps)
     else:
-        assert False and "Invalid optimizer"
+        assert False
         raise ValueError
 
     if len(opt_split) > 1:

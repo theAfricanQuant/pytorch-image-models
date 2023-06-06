@@ -21,10 +21,10 @@ def load_state_dict(checkpoint_path, use_ema=False):
             state_dict = new_state_dict
         else:
             state_dict = checkpoint
-        logging.info("Loaded {} from checkpoint '{}'".format(state_dict_key, checkpoint_path))
+        logging.info(f"Loaded {state_dict_key} from checkpoint '{checkpoint_path}'")
         return state_dict
     else:
-        logging.error("No checkpoint found at '{}'".format(checkpoint_path))
+        logging.error(f"No checkpoint found at '{checkpoint_path}'")
         raise FileNotFoundError()
 
 
@@ -34,10 +34,10 @@ def load_checkpoint(model, checkpoint_path, use_ema=False):
 
 
 def resume_checkpoint(model, checkpoint_path):
-    other_state = {}
     resume_epoch = None
     if os.path.isfile(checkpoint_path):
         checkpoint = torch.load(checkpoint_path, map_location='cpu')
+        other_state = {}
         if isinstance(checkpoint, dict) and 'state_dict' in checkpoint:
             new_state_dict = OrderedDict()
             for k, v in checkpoint['state_dict'].items():
@@ -52,13 +52,15 @@ def resume_checkpoint(model, checkpoint_path):
                 resume_epoch = checkpoint['epoch']
                 if 'version' in checkpoint and checkpoint['version'] > 1:
                     resume_epoch += 1  # start at the next epoch, old checkpoints incremented before save
-            logging.info("Loaded checkpoint '{}' (epoch {})".format(checkpoint_path, checkpoint['epoch']))
+            logging.info(
+                f"Loaded checkpoint '{checkpoint_path}' (epoch {checkpoint['epoch']})"
+            )
         else:
             model.load_state_dict(checkpoint)
-            logging.info("Loaded checkpoint '{}'".format(checkpoint_path))
+            logging.info(f"Loaded checkpoint '{checkpoint_path}'")
         return other_state, resume_epoch
     else:
-        logging.error("No checkpoint found at '{}'".format(checkpoint_path))
+        logging.error(f"No checkpoint found at '{checkpoint_path}'")
         raise FileNotFoundError()
 
 
@@ -73,23 +75,23 @@ def load_pretrained(model, cfg=None, num_classes=1000, in_chans=3, filter_fn=Non
 
     if in_chans == 1:
         conv1_name = cfg['first_conv']
-        logging.info('Converting first conv (%s) from 3 to 1 channel' % conv1_name)
-        conv1_weight = state_dict[conv1_name + '.weight']
-        state_dict[conv1_name + '.weight'] = conv1_weight.sum(dim=1, keepdim=True)
+        logging.info(f'Converting first conv ({conv1_name}) from 3 to 1 channel')
+        conv1_weight = state_dict[f'{conv1_name}.weight']
+        state_dict[f'{conv1_name}.weight'] = conv1_weight.sum(dim=1, keepdim=True)
     elif in_chans != 3:
         assert False, "Invalid in_chans for pretrained weights"
 
     classifier_name = cfg['classifier']
     if num_classes == 1000 and cfg['num_classes'] == 1001:
         # special case for imagenet trained models with extra background class in pretrained weights
-        classifier_weight = state_dict[classifier_name + '.weight']
-        state_dict[classifier_name + '.weight'] = classifier_weight[1:]
-        classifier_bias = state_dict[classifier_name + '.bias']
-        state_dict[classifier_name + '.bias'] = classifier_bias[1:]
+        classifier_weight = state_dict[f'{classifier_name}.weight']
+        state_dict[f'{classifier_name}.weight'] = classifier_weight[1:]
+        classifier_bias = state_dict[f'{classifier_name}.bias']
+        state_dict[f'{classifier_name}.bias'] = classifier_bias[1:]
     elif num_classes != cfg['num_classes']:
         # completely discard fully connected for all other differences between pretrained and created model
-        del state_dict[classifier_name + '.weight']
-        del state_dict[classifier_name + '.bias']
+        del state_dict[f'{classifier_name}.weight']
+        del state_dict[f'{classifier_name}.bias']
         strict = False
 
     if filter_fn is not None:

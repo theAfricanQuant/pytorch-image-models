@@ -60,9 +60,7 @@ class PlateauLRScheduler(Scheduler):
 
     def get_update_values(self, num_updates: int):
         if num_updates < self.warmup_updates:
-            lrs = [self.warmup_lr_init + num_updates * s for s in self.warmup_steps]
-        else:
-            self.warmup_active = False  # warmup cancelled by first update past warmup_update count
-            lrs = None  # no change on update after warmup stage
-        return lrs
+            return [self.warmup_lr_init + num_updates * s for s in self.warmup_steps]
+        self.warmup_active = False  # warmup cancelled by first update past warmup_update count
+        return None
 
